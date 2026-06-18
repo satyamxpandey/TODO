@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .todo-container {
+      width: 100%;
+      max-width: 500px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .header h1 { font-size: 20px; margin: 0 0 4px 0; font-weight: 700; }
+    .header p { font-size: 13px; color: var(--text-muted); margin: 0; }
+    .input-group { display: flex; gap: 8px; margin: 20px 0; }
+    .input-group input { flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; }
+    .input-group input:focus { border-color: var(--primary-color); }
+    .input-group button { background-color: var(--primary-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .task-list { list-style: none; padding: 0; margin: 0; }
+    .task-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); gap: 12px; }
+    .task-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color); }
+    .task-text { font-size: 14px; flex: 1; word-break: break-word; }
+    .completed .task-text { text-decoration: line-through; color: var(--text-muted); }
+    .loading-overlay { display: none; text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="todo-container">
+  <div class="header">
+    <h1>Today's Tasks</h1>
+    <p id="ist-date">Loading date...</p>
+  </div>
+  <div class="input-group">
+    <input type="text" id="task-input" placeholder="Add a vital task for today...">
+    <button onclick="createNewTask()">Add</button>
+  </div>
+  <div id="loading" class="loading-overlay">Syncing changes...</div>
+  <ul id="list-container" class="task-list"></ul>
+</div>
+
+<script>
+  function displayISTDate() {
+    const options = { timeZone: "Asia/Kolkata", year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('ist-date').innerText = new Intl.DateTimeFormat('en-IN', options).format(new Date()) + " (IST)";
+  }
+  function loadTasks() {
+    showLoading(true);
+    google.script.run.withSuccessHandler(renderTasks).getTodayTasks();
+  }
+  function renderTasks(tasks) {
+    const container = document.getElementById('list-container');
+    container.innerHTML = '';
+    if (tasks.length === 0) {
+      container.innerHTML = '<li class="task-item" style="color: var(--text-muted); font-size:13px;">No tasks assigned for today yet.</li>';
+      showLoading(false);
+      return;
+    }
+    tasks.forEach(task => {
+      const li = document.createElement('li');
+      li.className = `task-item ${task.status === 'Completed' ? 'completed' : ''}`;
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = task.status === 'Completed';
+      checkbox.onclick = () => handleToggle(task.rowIndex, task.status);
+      const span = document.createElement('span');
+      span.className = 'task-text';
+      span.innerText = task.text;
+      li.appendChild(checkbox);
+      li.appendChild(span);
+      container.appendChild(li);
+    });
+    showLoading(false);
+  }
+  function handleToggle(rowIndex, currentStatus) {
+    showLoading(true);
+    google.script.run.withSuccessHandler(loadTasks).toggleTaskStatus(rowIndex, currentStatus);
+  }
+  function createNewTask() {
+    const input = document.getElementById('task-input');
+    const val = input.value.trim();
+    if(!val) return;
+    showLoading(true);
+    input.value = '';
+    google.script.run.withSuccessHandler(renderTasks).addTask(val);
+  }
+  function showLoading(show) {
+    document.getElementById('loading').style.display = show ? 'block' : 'none';
+  }
+  setInterval(loadTasks, 15000);
+  displayISTDate();
+  loadTasks();
+</script>
+</body>
+</html>
