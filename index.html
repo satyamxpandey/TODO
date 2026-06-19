@@ -6,13 +6,11 @@
   <style>
     :root {
       --primary-color: #2563eb;
-      --whatsapp-color: #25d366;
       --bg-color: #f8fafc;
       --card-bg: #ffffff;
       --text-main: #1e293b;
       --text-muted: #64748b;
       --border-color: #e2e8f0;
-      --danger-color: #ef4444;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -35,47 +33,37 @@
     .header h1 { font-size: 20px; margin: 0 0 4px 0; font-weight: 700; }
     .header p { font-size: 13px; color: var(--text-muted); margin: 0; }
     
-    /* Interactive Add Input Configuration */
-    .input-group { display: flex; gap: 8px; margin: 20px 0 5px 0; position: relative; }
-    .input-group input { flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 14px; padding-right: 75px; }
+    .input-group { display: flex; gap: 8px; margin: 20px 0 15px 0; }
+    .input-group input { flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 14px; }
     .input-group input:focus { border-color: var(--primary-color); }
     .input-group button { background-color: var(--primary-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; }
     
-    /* Live Input Badge Controls */
-    .priority-toggle {
+    /* Segmented Control Filter Buttons */
+    .filter-tabs {
       display: flex;
-      gap: 5px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
       margin-bottom: 15px;
+      gap: 4px;
     }
-    .prio-btn {
-      padding: 4px 10px;
-      font-size: 11px;
+    .filter-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 8px 12px;
+      font-size: 13px;
       font-weight: 600;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      cursor: pointer;
-      background: #f8fafc;
       color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
-    .prio-btn.active-normal { background: #eff6ff; color: var(--primary-color); border-color: var(--primary-color); }
-    .prio-btn.active-high { background: #fef2f2; color: var(--danger-color); border-color: var(--danger-color); }
-    
-    .char-counter { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: -10px; margin-bottom: 12px; }
-
-    /* Client-side Realtime Search Bar */
-    .search-group { margin-bottom: 15px; }
-    .search-group input { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box; background-color: #f8fafc; }
-    .search-group input:focus { background-color: #fff; border-color: var(--primary-color); }
-
-    .whatsapp-group { display: flex; gap: 8px; margin-bottom: 15px; }
-    .whatsapp-group input { flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 14px; }
-    .whatsapp-group input:focus { border-color: var(--whatsapp-color); }
-    .whatsapp-btn { background-color: var(--whatsapp-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; }
-    .whatsapp-icon-svg { width: 18px; height: 18px; fill: currentColor; }
-
-    .filter-tabs { display: flex; background: #f1f5f9; padding: 4px; border-radius: 8px; margin-bottom: 15px; gap: 4px; }
-    .filter-btn { flex: 1; background: transparent; border: none; padding: 8px 12px; font-size: 13px; font-weight: 600; color: var(--text-muted); border-radius: 6px; cursor: pointer; }
-    .filter-btn.active { background: var(--card-bg); color: var(--primary-color); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .filter-btn.active {
+      background: var(--card-bg);
+      color: var(--primary-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
 
     .task-list { list-style: none; padding: 0; margin: 0; }
     .task-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); gap: 12px; }
@@ -83,11 +71,6 @@
     .task-text { font-size: 14px; flex: 1; word-break: break-word; }
     .completed-view .task-text { text-decoration: line-through; color: var(--text-muted); }
     
-    /* Badges Style Layout */
-    .badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-right: 6px; display: inline-block; vertical-align: middle; }
-    .badge-high { background: #fef2f2; color: var(--danger-color); border: 1px solid #fee2e2; }
-    .badge-normal { background: #eff6ff; color: var(--primary-color); border: 1px solid #dbeafe; }
-
     .loading-overlay { display: none; text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 10px; }
   </style>
 </head>
@@ -100,26 +83,8 @@
   </div>
   
   <div class="input-group">
-    <input type="text" id="task-input" maxlength="80" oninput="updateCharCount()" placeholder="Add a vital task for today...">
+    <input type="text" id="task-input" placeholder="Add a vital task for today...">
     <button onclick="createNewTask()">Add</button>
-  </div>
-  <div id="char-count" class="char-counter">0 / 80 characters</div>
-
-  <div class="priority-toggle">
-    <span style="font-size: 12px; font-weight:600; color:var(--text-muted); align-self:center; margin-right:5px;">Priority:</span>
-    <button id="prio-normal" class="prio-btn active-normal" onclick="setPriority('NORMAL')">Normal</button>
-    <button id="prio-high" class="prio-btn" onclick="setPriority('HIGH')">High Urgent</button>
-  </div>
-
-  <div class="search-group">
-    <input type="text" id="task-search" oninput="renderTasks()" placeholder="🔍 Quick filter tasks on screen...">
-  </div>
-
-  <div class="whatsapp-group">
-    <input type="tel" id="wa-phone" placeholder="Enter Number" value="91">
-    <a id="wa-link" href="#" target="_top" class="whatsapp-btn" onclick="prepareWhatsAppUrl(this)">
-      <svg class="whatsapp-icon-svg" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.456L0 24zm6.59-4.846c1.66.986 3.288 1.488 4.643 1.489 5.425.002 9.845-4.417 9.848-9.842.002-2.628-1.02-5.1-2.872-6.957C16.356 1.992 13.9.97 11.997.97c-5.43 0-9.852 4.414-9.855 9.842-.001 1.702.469 3.366 1.36 4.766l-.995 3.636 3.733-.981zM17.13 14.8c-.28-.14-1.65-.814-1.906-.907-.256-.094-.443-.14-.63.14-.186.28-.72.906-.882 1.092-.163.186-.326.21-.605.07-.28-.14-1.18-.435-2.247-1.387-.83-.74-1.39-1.653-1.553-1.933-.163-.28-.017-.43.123-.57.127-.127.28-.326.42-.49.14-.163.186-.28.28-.466.094-.186.046-.35-.023-.49-.07-.14-.63-1.517-.862-2.077-.227-.547-.457-.473-.63-.482-.163-.008-.35-.01-.537-.01-.186 0-.49.07-.746.35-.256.28-1.026 1.004-1.026 2.45 0 1.445 1.05 2.843 1.197 3.03.147.186 2.067 3.155 5.006 4.42.7.3 1.245.48 1.67.616.703.224 1.344.192 1.85.117.563-.083 1.648-.674 1.882-1.326.234-.652.234-1.21.163-1.325-.07-.116-.256-.185-.536-.325z"/></svg>
-    </a>
   </div>
 
   <div class="filter-tabs">
@@ -132,27 +97,12 @@
 </div>
 
 <script>
-  let currentFilter = 'Pending';
-  let globalTasksData = [];
-  let selectedPriority = 'NORMAL';
-  
-  // Clean Audio Chime context using base64 browser data
-  const tickAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
+  let currentFilter = 'Pending'; // Keeps track of which tab is open
+  let globalTasksData = [];      // Caches active data stream
 
   function displayISTDate() {
     const options = { timeZone: "Asia/Kolkata", year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('ist-date').innerText = new Intl.DateTimeFormat('en-IN', options).format(new Date()) + " (IST)";
-  }
-
-  function setPriority(prio) {
-    selectedPriority = prio;
-    document.getElementById('prio-normal').classList.toggle('active-normal', prio === 'NORMAL');
-    document.getElementById('prio-high').classList.toggle('active-high', prio === 'HIGH');
-  }
-
-  function updateCharCount() {
-    const len = document.getElementById('task-input').value.length;
-    document.getElementById('char-count').innerText = `${len} / 80 characters`;
   }
 
   function loadTasks() {
@@ -172,18 +122,15 @@
 
   function renderTasks() {
     const container = document.getElementById('list-container');
-    const searchQuery = document.getElementById('task-search').value.toLowerCase().trim();
     container.innerHTML = '';
     
-    let filteredTasks = globalTasksData.filter(task => task.status === currentFilter);
-    
-    // Client-side text search filter execution
-    if (searchQuery) {
-      filteredTasks = filteredTasks.filter(task => task.text.toLowerCase().includes(searchQuery));
-    }
+    // Filter array dynamically based on selected interface tab
+    const filteredTasks = globalTasksData.filter(task => task.status === currentFilter);
     
     if (filteredTasks.length === 0) {
-      const emptyMsg = currentFilter === 'Pending' ? '🎉 Complete alignment achieved!' : 'No tasks completed yet.';
+      const emptyMsg = currentFilter === 'Pending' 
+        ? '🎉 Complete alignment achieved! No pending actions.' 
+        : 'No tasks completed yet today.';
       container.innerHTML = `<li class="task-item" style="color: var(--text-muted); font-size:13px; text-align:center; padding:20px; border:none;">${emptyMsg}</li>`;
       showLoading(false);
       return;
@@ -196,25 +143,14 @@
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.checked = (task.status === 'Completed'); 
-      checkbox.onclick = () => {
-        try { tickAudio.play(); } catch(e){}
-        handleToggle(task.rowIndex, task.status);
-      };
+      checkbox.onclick = () => handleToggle(task.rowIndex, task.status);
       
-      const textSpan = document.createElement('span');
-      textSpan.className = 'task-text';
-      
-      // Extract custom priority markers if present
-      if (task.text.startsWith('[HIGH]')) {
-        textSpan.innerHTML = `<span class="badge badge-high">High</span> ` + task.text.replace('[HIGH]', '');
-      } else if (task.text.startsWith('[NORMAL]')) {
-        textSpan.innerHTML = `<span class="badge badge-normal">Normal</span> ` + task.text.replace('[NORMAL]', '');
-      } else {
-        textSpan.innerText = task.text;
-      }
+      const span = document.createElement('span');
+      span.className = 'task-text';
+      span.innerText = task.text;
       
       li.appendChild(checkbox);
-      li.appendChild(textSpan);
+      li.appendChild(span);
       container.appendChild(li);
     });
     showLoading(false);
@@ -227,42 +163,21 @@
 
   function createNewTask() {
     const input = document.getElementById('task-input');
-    let val = input.value.trim();
+    const val = input.value.trim();
     if(!val) return;
-    
-    // Attach clean priority prefixes seamlessly
-    val = `[${selectedPriority}] ${val}`;
-    
     showLoading(true);
     input.value = '';
-    document.getElementById('char-count').innerText = "0 / 80 characters";
     google.script.run.withSuccessHandler(function(tasks) {
       globalTasksData = tasks;
       renderTasks();
     }).addTask(val);
   }
 
-  function prepareWhatsAppUrl(anchorElement) {
-    const phoneInput = document.getElementById('wa-phone').value.replace(/[^0-9]/g, '');
-    const taskInput = document.getElementById('task-input').value.trim();
-    
-    if (!phoneInput || phoneInput.length < 10) {
-      alert("Please enter a valid phone number.");
-      anchorElement.href = "#";
-      return false;
-    }
-
-    let message = `Hello, updates from OfBuzz Matrix:`;
-    if (taskInput) message += `\n\nTarget Action: *${taskInput}*`;
-
-    anchorElement.href = `https://wa.me/${phoneInput}?text=${encodeURIComponent(message)}`;
-  }
-
   function showLoading(show) {
     document.getElementById('loading').style.display = show ? 'block' : 'none';
   }
 
-  setInterval(loadTasks, 15000);
+  setInterval(loadTasks, 10000); // 10-second cross-user synchronizer
   displayISTDate();
   loadTasks();
 </script>
