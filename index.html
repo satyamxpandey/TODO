@@ -38,7 +38,6 @@
     .input-group input:focus { border-color: var(--primary-color); }
     .input-group button { background-color: var(--primary-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; }
     
-    /* Segmented Control Filter Buttons */
     .filter-tabs {
       display: flex;
       background: #f1f5f9;
@@ -97,8 +96,8 @@
 </div>
 
 <script>
-  let currentFilter = 'Pending'; // Keeps track of which tab is open
-  let globalTasksData = [];      // Caches active data stream
+  let currentFilter = 'Pending'; 
+  let globalTasksData = [];      
 
   function displayISTDate() {
     const options = { timeZone: "Asia/Kolkata", year: 'numeric', month: 'long', day: 'numeric' };
@@ -124,7 +123,6 @@
     const container = document.getElementById('list-container');
     container.innerHTML = '';
     
-    // Filter array dynamically based on selected interface tab
     const filteredTasks = globalTasksData.filter(task => task.status === currentFilter);
     
     if (filteredTasks.length === 0) {
@@ -177,7 +175,7 @@
     document.getElementById('loading').style.display = show ? 'block' : 'none';
   }
 
-  setInterval(loadTasks, 10000); // 10-second cross-user synchronizer
+  setInterval(loadTasks, 10000); 
   displayISTDate();
   loadTasks();
 </script>
