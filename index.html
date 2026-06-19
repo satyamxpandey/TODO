@@ -32,14 +32,45 @@
     }
     .header h1 { font-size: 20px; margin: 0 0 4px 0; font-weight: 700; }
     .header p { font-size: 13px; color: var(--text-muted); margin: 0; }
-    .input-group { display: flex; gap: 8px; margin: 20px 0; }
-    .input-group input { flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; }
+    
+    .input-group { display: flex; gap: 8px; margin: 20px 0 15px 0; }
+    .input-group input { flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 14px; }
     .input-group input:focus { border-color: var(--primary-color); }
-    .input-group button { background-color: var(--primary-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .input-group button { background-color: var(--primary-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    
+    /* Segmented Control Filter Buttons */
+    .filter-tabs {
+      display: flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      gap: 4px;
+    }
+    .filter-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .filter-btn.active {
+      background: var(--card-bg);
+      color: var(--primary-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
     .task-list { list-style: none; padding: 0; margin: 0; }
     .task-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); gap: 12px; }
     .task-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color); }
     .task-text { font-size: 14px; flex: 1; word-break: break-word; }
+    .completed-view .task-text { text-decoration: line-through; color: var(--text-muted); }
+    
     .loading-overlay { display: none; text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 10px; }
   </style>
 </head>
@@ -47,18 +78,28 @@
 
 <div class="todo-container">
   <div class="header">
-    <h1>Today's Active Tasks</h1>
+    <h1>Workspace Tasks</h1>
     <p id="ist-date">Loading workspace timeline...</p>
   </div>
+  
   <div class="input-group">
     <input type="text" id="task-input" placeholder="Add a vital task for today...">
     <button onclick="createNewTask()">Add</button>
   </div>
+
+  <div class="filter-tabs">
+    <button id="btn-pending" class="filter-btn active" onclick="changeFilter('Pending')">Active Tasks</button>
+    <button id="btn-completed" class="filter-btn" onclick="changeFilter('Completed')">Completed Report</button>
+  </div>
+
   <div id="loading" class="loading-overlay">Syncing global parameters...</div>
   <ul id="list-container" class="task-list"></ul>
 </div>
 
 <script>
+  let currentFilter = 'Pending'; // Keeps track of which tab is open
+  let globalTasksData = [];      // Caches active data stream
+
   function displayISTDate() {
     const options = { timeZone: "Asia/Kolkata", year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('ist-date').innerText = new Intl.DateTimeFormat('en-IN', options).format(new Date()) + " (IST)";
@@ -66,29 +107,42 @@
 
   function loadTasks() {
     showLoading(true);
-    google.script.run.withSuccessHandler(renderTasks).getTodayTasks();
+    google.script.run.withSuccessHandler(function(tasks) {
+      globalTasksData = tasks;
+      renderTasks();
+    }).getTodayTasks();
   }
 
-  function renderTasks(tasks) {
+  function changeFilter(filterType) {
+    currentFilter = filterType;
+    document.getElementById('btn-pending').classList.toggle('active', filterType === 'Pending');
+    document.getElementById('btn-completed').classList.toggle('active', filterType === 'Completed');
+    renderTasks();
+  }
+
+  function renderTasks() {
     const container = document.getElementById('list-container');
     container.innerHTML = '';
     
-    // Core Filter Logic: Show only tasks that are NOT completed
-    const pendingTasks = tasks.filter(task => task.status !== 'Completed');
+    // Filter array dynamically based on selected interface tab
+    const filteredTasks = globalTasksData.filter(task => task.status === currentFilter);
     
-    if (pendingTasks.length === 0) {
-      container.innerHTML = '<li class="task-item" style="color: var(--text-muted); font-size:13px; text-align:center; padding:20px; border:none;">🎉 Complete alignment achieved! No pending actions for today.</li>';
+    if (filteredTasks.length === 0) {
+      const emptyMsg = currentFilter === 'Pending' 
+        ? '🎉 Complete alignment achieved! No pending actions.' 
+        : 'No tasks completed yet today.';
+      container.innerHTML = `<li class="task-item" style="color: var(--text-muted); font-size:13px; text-align:center; padding:20px; border:none;">${emptyMsg}</li>`;
       showLoading(false);
       return;
     }
 
-    pendingTasks.forEach(task => {
+    filteredTasks.forEach(task => {
       const li = document.createElement('li');
-      li.className = 'task-item';
+      li.className = `task-item ${task.status === 'Completed' ? 'completed-view' : ''}`;
       
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
-      checkbox.checked = false; 
+      checkbox.checked = (task.status === 'Completed'); 
       checkbox.onclick = () => handleToggle(task.rowIndex, task.status);
       
       const span = document.createElement('span');
@@ -113,14 +167,17 @@
     if(!val) return;
     showLoading(true);
     input.value = '';
-    google.script.run.withSuccessHandler(renderTasks).addTask(val);
+    google.script.run.withSuccessHandler(function(tasks) {
+      globalTasksData = tasks;
+      renderTasks();
+    }).addTask(val);
   }
 
   function showLoading(show) {
     document.getElementById('loading').style.display = show ? 'block' : 'none';
   }
 
-  setInterval(loadTasks, 10000); // 10-second background database polling loop
+  setInterval(loadTasks, 10000); // 10-second cross-user synchronizer
   displayISTDate();
   loadTasks();
 </script>
